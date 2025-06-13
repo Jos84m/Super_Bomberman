@@ -1,135 +1,60 @@
+#===================================================================================================================================================================================================================================
+# Importamos librerias de necesarias para la creacion del juego 
 import pygame
 import random
 import json
 import os
+import time
+
+# Importamos librerias adicionales para una mejora del juego 
 from enum import Enum
 from typing import List, Tuple, Dict, Optional
-import time
-import math
-import sys
+
+# Addicionales creados por nosostros para una mejor legibilidad del codigo
 from Character import Character
+from enemy import Enemy
+from Bomb import Bomb
+from explosion import Explosion
+from projectile import Projectile
+from GameState import GameState
+from TileType import TileType
+from Constances import Constances 
+
+#==================================================================================================================================================================================================================================================
 
 # Inicializar Pygame
 pygame.init()
 
-# Dimensiones de la ventana
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
-# Tamaño de los tiles
-TILE_SIZE = 32
-# Dimensiones del laberinto
-MAZE_WIDTH = (WINDOW_WIDTH - 100) // TILE_SIZE
-MAZE_HEIGHT = (WINDOW_HEIGHT - 100) // TILE_SIZE
-# Velocidades
-PLAYER_SPEED = 5
-ENEMY_SPEED = 3
-BOMB_TIMER = 3000  # 3 segundos
-# Puntajes
-POINTS_ENEMY = 100
-POINTS_ITEM = 50
-POINTS_LEVEL = 1000
-FPS = 60  # Frames por segundo
- 
+#===================================================================================================================================================================================================================================================
 
-# Colores
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-ORANGE = (255, 165, 0)
-PURPLE = (128, 0, 128)
-BROWN = (139, 69, 19)
-GRAY = (128, 128, 128)
-DARK_GRAY = (64, 64, 64)
-
-class GameState(Enum):
-    MENU = 1
-    CHARACTER_SELECT = 2
-    GAME = 3
-    SETTINGS = 4
-    SCORES = 5
-    INFO = 6
-    GAME_OVER = 7
-    LEVEL_COMPLETE = 8
-
-class TileType(Enum):
-    EMPTY = 0
-    WALL = 1
-    DESTRUCTIBLE = 2
-    BOMB = 3
-    EXPLOSION = 4
-    KEY = 5
-    DOOR = 6
-    POWERUP_HEALTH = 7
-    POWERUP_DAMAGE = 8
-    ITEM_SPEED = 9
-    ITEM_BOMBS = 10
-    ITEM_RANGE = 11
-
-
-class Enemy:
-    def __init__(self, x: int, y: int, enemy_type: str, health: int = 1):
-        self.x = x
-        self.y = y
-        self.type = enemy_type
-        self.health = health
-        self.last_move_time = 0
-        self.move_delay = random.randint(500, 1500)
-        self.can_shoot = enemy_type in ["archer", "mage"]
-        self.last_shot_time = 0
-        self.shot_delay = random.randint(2000, 4000)
-
-class Bomb:
-    def __init__(self, x: int, y: int, damage: int, range_size: int = 2):
-        self.x = x
-        self.y = y
-        self.damage = damage
-        self.range = range_size
-        self.timer = 3000  # 3 segundos
-        self.exploded = False
-
-class Explosion:
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
-        self.timer = 500  # 0.5 segundos
-
-class Projectile:
-    def __init__(self, x: int, y: int, direction: Tuple[int, int], damage: int):
-        self.x = float(x)
-        self.y = float(y)
-        self.dx, self.dy = direction
-        self.damage = damage
-        self.speed = 3
+# Codigo de BombermanGame 
 
 class BombermanGame:
     def __init__(self):
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        pygame.display.set_caption("Vintage Bomberman")
+        self.screen = pygame.display.set_mode((Constances.WINDOW_WIDTH, Constances.WINDOW_HEIGHT))
+        pygame.display.set_caption("Bomderman Ultimate")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
         self.big_font = pygame.font.Font(None, 72)
         self.small_font = pygame.font.Font(None, 24)
         
-        # Estados del juego
+# Estados del juego
         self.state = GameState.MENU
         self.running = True
         self.music_enabled = True
         self.current_level = 1
         self.max_levels = 4
-        
-        # Personajes disponibles
+    
+# Personajes disponibles
         self.characters = [
-            Character("Bomber", 3, 1, 1, "Extra Bomb", RED),
-            Character("Speedy", 2, 1, 1, "Speed Boost", BLUE),
-            Character("Tank", 4, 2, 1, "Shield", GREEN)
+            Character("Bomber", 3, 1, 1, "Extra Bomb", Constances.RED),
+            Character("Speedy", 2, 1, 1, "Speed Boost", Constances.BLUE),
+            Character("Tank", 4, 2, 1, "Shield", Constances.GREEN)
         ]
         self.selected_character = 0
         self.player_name = ""
         
-        # Datos del juego
+# Datos del juego
         self.player = None
         self.maze = []
         self.enemies = []
@@ -139,10 +64,10 @@ class BombermanGame:
         self.game_start_time = 0
         self.level_start_time = 0
         
-        # Puntajes
+# Puntajes
         self.high_scores = self.load_high_scores()
         
-        # Controles
+# Controles
         self.controls = {
             'up': pygame.K_w,
             'down': pygame.K_s, 
@@ -156,6 +81,7 @@ class BombermanGame:
             'power2': pygame.K_e
         }
 
+# Carga de los mejores puntajes del juego (Usuarios que han jugado)------------------------------------------------------------------------------------------------------------------------------------
     def load_high_scores(self) -> List[Dict]:
         if os.path.exists('high_scores.json'):
             try:
@@ -164,7 +90,8 @@ class BombermanGame:
             except:
                 pass
         return []
-
+    
+# Guarda los mejores puntajes de los usuarios del codigo-----------------------------------------------------------------------------------------------------------------------------------------------
     def save_high_scores(self):
         try:
             with open('high_scores.json', 'w') as f:
@@ -172,9 +99,10 @@ class BombermanGame:
         except:
             pass
 
+# Agrega los datos de los usuarios con mejores puntajes------------------------------------------------------------------------------------------------------------------------------------------------
     def add_high_score(self, name: str, score: int, time_played: int):
         self.high_scores.append({
-            'name': name,
+            'name': name,           
             'score': score,
             'time': time_played,
             'level': self.current_level
@@ -183,35 +111,39 @@ class BombermanGame:
         self.high_scores = self.high_scores[:5]
         self.save_high_scores()
 
+# Codigo de creacion del laberinto del juego-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Funcion de la creacion base 
     def generate_maze(self):
-        # Crear laberinto base
-        self.maze = [[TileType.EMPTY for _ in range(MAZE_WIDTH)] for _ in range(MAZE_HEIGHT)]
+
+# Crear laberinto base
+        self.maze = [[TileType.EMPTY for _ in range(Constances.MAZE_WIDTH)] for _ in range(Constances.MAZE_HEIGHT)]
         
-        # Paredes exteriores
-        for x in range(MAZE_WIDTH):
+# Paredes exteriores
+        for x in range(Constances.MAZE_WIDTH):
             self.maze[0][x] = TileType.WALL
-            self.maze[MAZE_HEIGHT-1][x] = TileType.WALL
-        for y in range(MAZE_HEIGHT):
+            self.maze[Constances.MAZE_HEIGHT-1][x] = TileType.WALL
+        for y in range(Constances.MAZE_HEIGHT):
             self.maze[y][0] = TileType.WALL
-            self.maze[y][MAZE_WIDTH-1] = TileType.WALL
+            self.maze[y][Constances.MAZE_WIDTH-1] = TileType.WALL
             
-        # Patrón de paredes internas
-        for y in range(2, MAZE_HEIGHT-2, 2):
-            for x in range(2, MAZE_WIDTH-2, 2):
+# Patrón de paredes internas
+        for y in range(2, Constances.MAZE_HEIGHT-2, 2):
+            for x in range(2, Constances.MAZE_WIDTH-2, 2):
                 self.maze[y][x] = TileType.WALL
                 
-        # Bloques destructibles aleatorios
+# Bloques destructibles aleatorios
         destructible_count = 30 + self.current_level * 10
         for _ in range(destructible_count):
-            x = random.randint(1, MAZE_WIDTH-2)
-            y = random.randint(1, MAZE_HEIGHT-2)
+            x = random.randint(1, Constances.MAZE_WIDTH-2)
+            y = random.randint(1, Constances.MAZE_HEIGHT-2)
             if self.maze[y][x] == TileType.EMPTY and not (x <= 2 and y <= 2):
                 self.maze[y][x] = TileType.DESTRUCTIBLE
                 
-        # Colocar llave en bloque destructible
+# Colocar llave en bloque destructible
         destructible_blocks = []
-        for y in range(MAZE_HEIGHT):
-            for x in range(MAZE_WIDTH):
+        for y in range(Constances.MAZE_HEIGHT):
+            for x in range(Constances.MAZE_WIDTH):
                 if self.maze[y][x] == TileType.DESTRUCTIBLE:
                     destructible_blocks.append((x, y))
         
@@ -219,22 +151,22 @@ class BombermanGame:
             key_x, key_y = random.choice(destructible_blocks)
             self.key_position = (key_x, key_y)
             
-        # Colocar puerta
+# Colocar puerta
         while True:
-            door_x = random.randint(1, MAZE_WIDTH-2)
-            door_y = random.randint(1, MAZE_HEIGHT-2)
+            door_x = random.randint(1, Constances.MAZE_WIDTH-2)
+            door_y = random.randint(1, Constances.MAZE_HEIGHT-2)
             if self.maze[door_y][door_x] == TileType.DESTRUCTIBLE:
                 self.door_position = (door_x, door_y)
                 break
-
+# Funcion de spawn de enemigos en lugares random de el laberinto 
     def spawn_enemies(self):
         self.enemies = []
         enemy_count = min(2 + self.current_level, 8)
         
         for _ in range(enemy_count):
             while True:
-                x = random.randint(3, MAZE_WIDTH-4)
-                y = random.randint(3, MAZE_HEIGHT-4)
+                x = random.randint(3, Constances.MAZE_WIDTH-4)
+                y = random.randint(3, Constances.MAZE_HEIGHT-4)
                 if self.maze[y][x] == TileType.EMPTY and (abs(x - self.player.x) > 3 or abs(y - self.player.y) > 3):
                     if self.current_level <= 2:
                         enemy_type = "basic"
@@ -247,27 +179,30 @@ class BombermanGame:
                     self.enemies.append(Enemy(x, y, enemy_type, health))
                     break
 
+# Fucion de spawn de items como (poderes o armas)
     def spawn_items(self):
-        # Spawnar powerups (solo para el nivel actual)
+
+# Spawnar powerups (solo para el nivel actual)
         for _ in range(2):
             while True:
-                x = random.randint(1, MAZE_WIDTH-2)
-                y = random.randint(1, MAZE_HEIGHT-2)
+                x = random.randint(1, Constances.MAZE_WIDTH-2)
+                y = random.randint(1, Constances.MAZE_HEIGHT-2)
                 if self.maze[y][x] == TileType.EMPTY:
                     powerup_type = random.choice([TileType.POWERUP_HEALTH, TileType.POWERUP_DAMAGE])
                     self.maze[y][x] = powerup_type
                     break
                     
-        # Spawnar items (permanentes)
+# Spawnar items (permanentes) del juego 
         for _ in range(3):
             while True:
-                x = random.randint(1, MAZE_WIDTH-2)
-                y = random.randint(1, MAZE_HEIGHT-2)
+                x = random.randint(1, Constances.MAZE_WIDTH-2)
+                y = random.randint(1, Constances.MAZE_HEIGHT-2)
                 if self.maze[y][x] == TileType.EMPTY:
                     item_type = random.choice([TileType.ITEM_SPEED, TileType.ITEM_BOMBS, TileType.ITEM_RANGE])
                     self.maze[y][x] = item_type
                     break
 
+# Empezar la creacion de una nueva partida
     def start_new_game(self):
         self.player = Character(
             self.characters[self.selected_character].name,
@@ -283,6 +218,7 @@ class BombermanGame:
         self.game_start_time = pygame.time.get_ticks()
         self.start_level()
 
+# Emmpezar el nivel (dependiendo del nivel ya sea el inicio o bien continuar al siguiente nivel)
     def start_level(self):
         self.level_start_time = pygame.time.get_ticks()
         self.generate_maze()
@@ -296,6 +232,7 @@ class BombermanGame:
         # Resetear powerups del nivel anterior
         self.player.powerups = {"health": 0, "damage": 0}
 
+# Creacion de eventos del codigo (Utilizando el TileType.py y GameState.py)
     def handle_input(self, event):
         if event.type == pygame.QUIT:
             self.running = False
@@ -330,6 +267,7 @@ class BombermanGame:
                                           pygame.time.get_ticks() - self.game_start_time)
                         self.state = GameState.GAME_OVER
 
+# Codigo del menu de inputs: Para utilizar el keymaps
     def handle_menu_input(self, event):
         if event.key == pygame.K_1:
             self.state = GameState.CHARACTER_SELECT
@@ -342,6 +280,7 @@ class BombermanGame:
         elif event.key == pygame.K_ESCAPE:
             self.running = False
 
+# Codigo de seleccion de personaje con sus caracteristicas-ventajas de cada uno.
     def handle_character_select_input(self, event):
         if event.key == pygame.K_LEFT:
             self.selected_character = (self.selected_character - 1) % len(self.characters)
@@ -359,6 +298,7 @@ class BombermanGame:
             if len(self.player_name) < 15 and event.unicode.isalnum():
                 self.player_name += event.unicode
 
+# Creacion del evento de funcionalidad de creacion poner (bombas, items, poderes y dano )
     def handle_game_input(self, event):
         if event.key == pygame.K_ESCAPE:
             self.state = GameState.MENU
@@ -375,22 +315,23 @@ class BombermanGame:
         elif event.key == self.controls['power2']:
             self.use_powerup("damage")
 
+# Creacion de configuracion utilizando keymap 
     def handle_settings_input(self, event):
         if event.key == pygame.K_m:
             self.music_enabled = not self.music_enabled
         elif event.key == pygame.K_ESCAPE:
             self.state = GameState.MENU
 
+# Funcionalidad del movivmiento del personaje en el juego 
     def move_player(self):
         keys = pygame.key.get_pressed()
         current_time = pygame.time.get_ticks()
         
-        # Control de velocidad de movimiento
+# Control de velocidad de movimiento
         if current_time - self.player.last_move_time < 100:
             return
-            
         new_x, new_y = self.player.x, self.player.y
-        
+
         if keys[self.controls['up']]:
             new_y -= 1
         elif keys[self.controls['down']]:
@@ -402,30 +343,31 @@ class BombermanGame:
         else:
             return
             
-        # Verificar colisiones
+# Verificar colisiones
         if self.can_move_to(new_x, new_y):
             self.player.x = new_x
             self.player.y = new_y
             self.player.last_move_time = current_time
             
-            # Verificar pickup de items
+# Verificar pickup de items
             self.check_pickups()
 
+# Funcionalidad de poder moverse por toda la ventana o laberinto
     def can_move_to(self, x: int, y: int) -> bool:
-        if x < 0 or x >= MAZE_WIDTH or y < 0 or y >= MAZE_HEIGHT:
+        if x < 0 or x >= Constances.MAZE_WIDTH or y < 0 or y >= Constances.MAZE_HEIGHT:
             return False
-            
         tile = self.maze[y][x]
         if tile in [TileType.WALL, TileType.DESTRUCTIBLE, TileType.BOMB]:
             return False
             
-        # Verificar colisión con enemigos
+# Verificar colisión con enemigos
         for enemy in self.enemies:
             if enemy.x == x and enemy.y == y:
                 return False
                 
         return True
-
+    
+# Funcion de verificar que el personaje recoga los (items, dano, poderes, llave)
     def check_pickups(self):
         tile = self.maze[self.player.y][self.player.x]
         
@@ -455,6 +397,7 @@ class BombermanGame:
             self.player.items[item_name] += 1
             self.maze[self.player.y][self.player.x] = TileType.EMPTY
 
+# Codigo para poder poner la bomba en cualquier lugar del laberinto o ventana mientras cuando no choque con otro objeto
     def place_bomb(self):
         if self.player.bombs_placed >= self.player.max_bombs + self.player.items["bombs"]:
             return
@@ -470,6 +413,7 @@ class BombermanGame:
         self.maze[self.player.y][self.player.x] = TileType.BOMB
         self.player.bombs_placed += 1
 
+# Funcionalidad de usar el item 
     def use_item(self, item_type: str):
         if self.player.items[item_type] > 0:
             self.player.items[item_type] -= 1
@@ -484,6 +428,7 @@ class BombermanGame:
                 # Ya se usa en place_bomb
                 pass
 
+# Funcionalidad de applicar de los poderes
     def use_powerup(self, powerup_type: str):
         if self.player.powerups[powerup_type] > 0:
             self.player.powerups[powerup_type] -= 1
@@ -491,9 +436,10 @@ class BombermanGame:
             if powerup_type == "health":
                 self.player.health = min(self.player.health + 1, self.player.max_health)
             elif powerup_type == "damage":
-                # Ya se aplica en bomb_damage
+# Ya se aplica en bomb_damage
                 pass
 
+# Cargar o actualizar la localizacion de la bomba y tambien carrga el tiempo en explotar 
     def update_bombs(self):
         current_time = pygame.time.get_ticks()
         
@@ -503,23 +449,24 @@ class BombermanGame:
                 self.explode_bomb(bomb)
                 bomb.exploded = True
 
+# Funcionalidad la explocion de la bomba
     def explode_bomb(self, bomb: Bomb):
-        # Remover bomba del laberinto
+# Remover bomba del laberinto
         self.maze[bomb.y][bomb.x] = TileType.EMPTY
         self.player.bombs_placed -= 1
         
-        # Crear explosión central
+# Crear explosión central
         self.explosions.append(Explosion(bomb.x, bomb.y))
         self.maze[bomb.y][bomb.x] = TileType.EXPLOSION
         
-        # Explosiones en las 4 direcciones
+# Explosiones en las 4 direcciones
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         
         for dx, dy in directions:
             for i in range(1, bomb.range + 1):
                 ex, ey = bomb.x + dx * i, bomb.y + dy * i
                 
-                if ex < 0 or ex >= MAZE_WIDTH or ey < 0 or ey >= MAZE_HEIGHT:
+                if ex < 0 or ex >= Constances.MAZE_WIDTH or ey < 0 or ey >= Constances.MAZE_HEIGHT:
                     break
                     
                 if self.maze[ey][ex] == TileType.WALL:
@@ -529,7 +476,7 @@ class BombermanGame:
                     self.explosions.append(Explosion(ex, ey))
                     self.player.score += 10
                     
-                    # Chance de revelar llave
+# Chance de revelar llave
                     if hasattr(self, 'key_position') and (ex, ey) == self.key_position:
                         # La llave aparecerá después de que se desvanezca la explosión
                         pass
@@ -541,10 +488,11 @@ class BombermanGame:
                     self.maze[ey][ex] = TileType.EXPLOSION
                     self.explosions.append(Explosion(ex, ey))
         
-        # Remover bomba de la lista
+# Remover bomba de la lista
         if bomb in self.bombs:
             self.bombs.remove(bomb)
 
+# Actualizacion de explosiones de la bomba
     def update_explosions(self):
         current_time = pygame.time.get_ticks()
         
@@ -553,7 +501,7 @@ class BombermanGame:
             if explosion.timer <= 0:
                 self.maze[explosion.y][explosion.x] = TileType.EMPTY
                 
-                # Revelar objetos ocultos
+# Revelar objetos ocultos
                 if hasattr(self, 'key_position') and (explosion.x, explosion.y) == self.key_position:
                     self.maze[explosion.y][explosion.x] = TileType.KEY
                 elif hasattr(self, 'door_position') and (explosion.x, explosion.y) == self.door_position:
@@ -561,22 +509,24 @@ class BombermanGame:
                     
                 self.explosions.remove(explosion)
 
+# Actualizar los eneigos en el laberinto 
     def update_enemies(self):
         current_time = pygame.time.get_ticks()
         
         for enemy in self.enemies[:]:
-            # Movimiento básico
+# Movimiento básico
             if current_time - enemy.last_move_time > enemy.move_delay:
                 self.move_enemy(enemy)
                 enemy.last_move_time = current_time
                 enemy.move_delay = random.randint(500, 1500)
                 
-            # Disparo para enemigos que pueden disparar
+# Disparo para enemigos que pueden disparar
             if enemy.can_shoot and current_time - enemy.last_shot_time > enemy.shot_delay:
                 self.enemy_shoot(enemy)
                 enemy.last_shot_time = current_time
                 enemy.shot_delay = random.randint(2000, 4000)
 
+# Movimiento de enemigo en el laberinto o ventana 
     def move_enemy(self, enemy: Enemy):
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         random.shuffle(directions)
@@ -589,7 +539,7 @@ class BombermanGame:
                 enemy.x = new_x
                 enemy.y = new_y
                 break
-
+# Funcionalidad de disparar enemy
     def enemy_shoot(self, enemy: Enemy):
         # Disparar hacia el jugador si está en línea de vista
         if enemy.x == self.player.x:
@@ -602,21 +552,22 @@ class BombermanGame:
         projectile = Projectile(enemy.x, enemy.y, direction, 1)
         self.projectiles.append(projectile)
 
+# Actualizar projectiles
     def update_projectiles(self):
         for projectile in self.projectiles[:]:
             projectile.x += projectile.dx * projectile.speed
             projectile.y += projectile.dy * projectile.speed
             
-            # Verificar colisiones
+# Verificar colisiones
             grid_x, grid_y = int(projectile.x), int(projectile.y)
             
-            if (grid_x < 0 or grid_x >= MAZE_WIDTH or 
-                grid_y < 0 or grid_y >= MAZE_HEIGHT or
+            if (grid_x < 0 or grid_x >= Constances.MAZE_WIDTH or 
+                grid_y < 0 or grid_y >= Constances.MAZE_HEIGHT or
                 self.maze[grid_y][grid_x] in [TileType.WALL, TileType.DESTRUCTIBLE]):
                 self.projectiles.remove(projectile)
                 continue
                 
-            # Colisión con jugador
+# Colisión con jugador
             if grid_x == self.player.x and grid_y == self.player.y:
                 if pygame.time.get_ticks() - self.player.invulnerable_time > 1000:
                     self.player.health -= projectile.damage
@@ -625,8 +576,9 @@ class BombermanGame:
                         self.game_over()
                 self.projectiles.remove(projectile)
 
+# Funcion de verificacion de colisiones de los objetos
     def check_collisions(self):
-        # Colisión jugador con enemigos
+# Colisión jugador con enemigos
         for enemy in self.enemies:
             if enemy.x == self.player.x and enemy.y == self.player.y:
                 if pygame.time.get_ticks() - self.player.invulnerable_time > 1000:
@@ -635,7 +587,7 @@ class BombermanGame:
                     if self.player.health <= 0:
                         self.game_over()
                         
-        # Colisión jugador con explosiones
+# Colisión jugador con explosiones
         if self.maze[self.player.y][self.player.x] == TileType.EXPLOSION:
             if pygame.time.get_ticks() - self.player.invulnerable_time > 1000:
                 self.player.health -= 1
@@ -643,7 +595,7 @@ class BombermanGame:
                 if self.player.health <= 0:
                     self.game_over()
                     
-        # Enemigos vs explosiones
+# Enemigos vs explosiones
         for enemy in self.enemies[:]:
             if self.maze[enemy.y][enemy.x] == TileType.EXPLOSION:
                 enemy.health -= 1
@@ -651,11 +603,12 @@ class BombermanGame:
                     self.enemies.remove(enemy)
                     self.player.score += 50
 
+# Funcionalidad de ventana de game over 
     def game_over(self):
         total_time = pygame.time.get_ticks() - self.game_start_time
         self.add_high_score(self.player_name, self.player.score, total_time)
         self.state = GameState.GAME_OVER
-
+# Actualizacion de todas las funcionalidades necesarias en el laberinto o en el juego 
     def update(self):
         if self.state == GameState.GAME:
             self.move_player()
@@ -665,35 +618,39 @@ class BombermanGame:
             self.update_projectiles()
             self.check_collisions()
 
+# Dibujo del titulo del juego 
     def draw_tile(self, x: int, y: int, tile_type: TileType):
-        screen_x = x * TILE_SIZE + 50
-        screen_y = y * TILE_SIZE + 50
-        rect = pygame.Rect(screen_x, screen_y, TILE_SIZE, TILE_SIZE)
-        
+        screen_x = x * Constances.TILE_SIZE + 50
+        screen_y = y * Constances.TILE_SIZE + 50
+        rect = pygame.Rect(screen_x, screen_y, Constances.TILE_SIZE, Constances.TILE_SIZE)
+
+# Color de mapa con caracteristicas 
         color_map = {
-            TileType.EMPTY: WHITE,
-            TileType.WALL: GRAY,
-            TileType.DESTRUCTIBLE: BROWN,
-            TileType.BOMB: BLACK,
-            TileType.EXPLOSION: ORANGE,
-            TileType.KEY: YELLOW,
-            TileType.DOOR: PURPLE,
-            TileType.POWERUP_HEALTH: RED,
-            TileType.POWERUP_DAMAGE: BLUE,
-            TileType.ITEM_SPEED: GREEN,
-            TileType.ITEM_BOMBS: DARK_GRAY,
+            TileType.EMPTY: Constances.WHITE,
+            TileType.WALL: Constances.GRAY,
+            TileType.DESTRUCTIBLE: Constances.BROWN,
+            TileType.BOMB: Constances.BLACK,
+            TileType.EXPLOSION: Constances.ORANGE,
+            TileType.KEY: Constances.YELLOW,
+            TileType.DOOR: Constances.PURPLE,
+            TileType.POWERUP_HEALTH: Constances.RED,
+            TileType.POWERUP_DAMAGE: Constances.BLUE,
+            TileType.ITEM_SPEED: Constances.GREEN,
+            TileType.ITEM_BOMBS: Constances.DARK_GRAY,
             TileType.ITEM_RANGE: (255, 0, 255)
         }
         
-        pygame.draw.rect(self.screen, color_map.get(tile_type, WHITE), rect)
-        pygame.draw.rect(self.screen, BLACK, rect, 1)
+        pygame.draw.rect(self.screen, color_map.get(tile_type, Constances.WHITE), rect)
+        pygame.draw.rect(self.screen, Constances.BLACK, rect, 1)
 
+# Dibujo de personaje
     def draw_character(self, x: int, y: int, color: tuple):
-        screen_x = x * TILE_SIZE + 50 + TILE_SIZE // 4
-        screen_y = y * TILE_SIZE + 50 + TILE_SIZE // 4
-        radius = TILE_SIZE // 4
+        screen_x = x * Constances.TILE_SIZE + 50 + Constances.TILE_SIZE // 4
+        screen_y = y * Constances.TILE_SIZE + 50 + Constances.TILE_SIZE // 4
+        radius = Constances.TILE_SIZE // 4
         pygame.draw.circle(self.screen, color, (screen_x, screen_y), radius)
 
+# Dibujo de enemy
     def draw_enemy(self, enemy: Enemy):
         color_map = {
             "basic": (150, 0, 0),
@@ -702,25 +659,27 @@ class BombermanGame:
         }
         color = color_map.get(enemy.type, (150, 0, 0))
         
-        screen_x = enemy.x * TILE_SIZE + 50 + TILE_SIZE // 4
-        screen_y = enemy.y * TILE_SIZE + 50 + TILE_SIZE // 4
-        radius = TILE_SIZE // 6
+        screen_x = enemy.x * Constances.TILE_SIZE + 50 + Constances.TILE_SIZE // 4
+        screen_y = enemy.y * Constances.TILE_SIZE + 50 + Constances.TILE_SIZE // 4
+        radius = Constances.TILE_SIZE // 6
         pygame.draw.circle(self.screen, color, (screen_x, screen_y), radius)
 
+# Dibujo de proyectile 
     def draw_projectile(self, projectile: Projectile):
-        screen_x = int(projectile.x * TILE_SIZE + 50 + TILE_SIZE // 2)
-        screen_y = int(projectile.y * TILE_SIZE + 50 + TILE_SIZE // 2)
-        pygame.draw.circle(self.screen, RED, (screen_x, screen_y), 3)
+        screen_x = int(projectile.x * Constances.TILE_SIZE + 50 + Constances.TILE_SIZE // 2)
+        screen_y = int(projectile.y * Constances.TILE_SIZE + 50 + Constances.TILE_SIZE // 2)
+        pygame.draw.circle(self.screen, Constances.RED, (screen_x, screen_y), 3)
 
+# Dibujo del menu
     def draw_menu(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        # Título
-        title = self.big_font.render("VINTAGE BOMBERMAN", True, YELLOW)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 150))
+# Título
+        title = self.big_font.render("SUPER BOMBERMAN", True, Constances.YELLOW)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 150))
         self.screen.blit(title, title_rect)
         
-        # Opciones del menú
+# Opciones del menú
         options = [
             "1. Jugar",
             "2. Mejores Puntajes",
@@ -730,25 +689,26 @@ class BombermanGame:
         ]
         
         for i, option in enumerate(options):
-            text = self.font.render(option, True, WHITE)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 300 + i * 60))
+            text = self.font.render(option, True, Constances.WHITE)
+            text_rect = text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 300 + i * 60))
             self.screen.blit(text, text_rect)
 
+# Dibujo de seleccion de personaje 
     def draw_character_select(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        # Título
-        title = self.font.render("Seleccionar Personaje", True, YELLOW)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 100))
+# Título
+        title = self.font.render("Seleccionar Personaje", True, Constances.YELLOW)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 100))
         self.screen.blit(title, title_rect)
         
-        # Personajes
+# Personajes
         char = self.characters[self.selected_character]
         
-        # Mostrar personaje actual
-        pygame.draw.circle(self.screen, char.color, (WINDOW_WIDTH // 2, 250), 40)
+# Mostrar personaje actual
+        pygame.draw.circle(self.screen, char.color, (Constances.WINDOW_WIDTH // 2, 250), 40)
         
-        # Información del personaje
+# Información del personaje
         info = [
             f"Nombre: {char.name}",
             f"Vida: {char.health}",
@@ -758,100 +718,102 @@ class BombermanGame:
         ]
         
         for i, line in enumerate(info):
-            text = self.small_font.render(line, True, WHITE)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 320 + i * 30))
+            text = self.small_font.render(line, True, Constances.WHITE)
+            text_rect = text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 320 + i * 30))
             self.screen.blit(text, text_rect)
         
-        # Controles
-        controls = self.small_font.render("← → para cambiar, ENTER para continuar", True, GRAY)
-        controls_rect = controls.get_rect(center=(WINDOW_WIDTH // 2, 500))
+# Controles
+        controls = self.small_font.render("← → para cambiar, ENTER para continuar", True, Constances.GRAY)
+        controls_rect = controls.get_rect(center=(Constances.WINDOW_WIDTH // 2, 500))
         self.screen.blit(controls, controls_rect)
         
-        # Nombre del jugador
-        name_label = self.font.render("Nombre:", True, WHITE)
-        name_rect = name_label.get_rect(center=(WINDOW_WIDTH // 2 - 100, 550))
+# Nombre del jugador
+        name_label = self.font.render("Nombre:", True, Constances.WHITE)
+        name_rect = name_label.get_rect(center=(Constances.WINDOW_WIDTH // 2 - 100, 550))
         self.screen.blit(name_label, name_rect)
         
-        name_text = self.font.render(self.player_name + "_", True, YELLOW)
-        name_text_rect = name_text.get_rect(center=(WINDOW_WIDTH // 2 + 50, 550))
+        name_text = self.font.render(self.player_name + "_", True, Constances.YELLOW)
+        name_text_rect = name_text.get_rect(center=(Constances.WINDOW_WIDTH // 2 + 50, 550))
         self.screen.blit(name_text, name_text_rect)
 
+# Dibujo de juego 
     def draw_game(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        # Dibujar laberinto
-        for y in range(MAZE_HEIGHT):
-            for x in range(MAZE_WIDTH):
+# Dibujar laberinto
+        for y in range(Constances.MAZE_HEIGHT):
+            for x in range(Constances.MAZE_WIDTH):
                 self.draw_tile(x, y, self.maze[y][x])
         
-        # Dibujar jugador (con parpadeo si es invulnerable)
+# Dibujar jugador (con parpadeo si es invulnerable)
         current_time = pygame.time.get_ticks()
         if current_time - self.player.invulnerable_time > 1000 or (current_time // 100) % 2:
             self.draw_character(self.player.x, self.player.y, self.player.color)
         
-        # Dibujar enemigos
+# Dibujar enemigos
         for enemy in self.enemies:
             self.draw_enemy(enemy)
         
-        # Dibujar proyectiles
+# Dibujar proyectiles
         for projectile in self.projectiles:
             self.draw_projectile(projectile)
         
-        # HUD
+# HUD
         self.draw_hud()
 
+# Dibujo del hub
     def draw_hud(self):
-        hud_x = MAZE_WIDTH * TILE_SIZE + 100
+        hud_x = Constances.MAZE_WIDTH * Constances.TILE_SIZE + 100
         
-        # Vida
-        life_text = self.font.render(f"Vida: {self.player.health}/{self.player.max_health}", True, WHITE)
+# Vida
+        life_text = self.font.render(f"Vida: {self.player.health}/{self.player.max_health}", True, Constances.WHITE)
         self.screen.blit(life_text, (hud_x, 50))
         
-        # Puntos
-        score_text = self.font.render(f"Puntos: {self.player.score}", True, WHITE)
+# Puntos
+        score_text = self.font.render(f"Puntos: {self.player.score}", True, Constances.WHITE)
         self.screen.blit(score_text, (hud_x, 90))
         
-        # Tiempo
+# Tiempo
         current_time = pygame.time.get_ticks()
         game_time = (current_time - self.game_start_time) // 1000
-        time_text = self.font.render(f"Tiempo: {game_time}s", True, WHITE)
+        time_text = self.font.render(f"Tiempo: {game_time}s", True, Constances.WHITE)
         self.screen.blit(time_text, (hud_x, 130))
         
-        # Nivel
-        level_text = self.font.render(f"Nivel: {self.current_level}/{self.max_levels}", True, WHITE)
+# Nivel
+        level_text = self.font.render(f"Nivel: {self.current_level}/{self.max_levels}", True, Constances.WHITE)
         self.screen.blit(level_text, (hud_x, 170))
         
-        # Bombas
+# Bombas
         bombs_available = self.player.max_bombs + self.player.items["bombs"] - self.player.bombs_placed
-        bomb_text = self.font.render(f"Bombas: {bombs_available}", True, WHITE)
+        bomb_text = self.font.render(f"Bombas: {bombs_available}", True, Constances.WHITE)
         self.screen.blit(bomb_text, (hud_x, 210))
         
-        # Llave
+# Llave
         key_status = "Sí" if self.player.has_key else "No"
-        key_text = self.font.render(f"Llave: {key_status}", True, YELLOW if self.player.has_key else WHITE)
+        key_text = self.font.render(f"Llave: {key_status}", True, Constances.YELLOW if self.player.has_key else Constances.WHITE)
         self.screen.blit(key_text, (hud_x, 250))
         
-        # Items
+# Items
         items_y = 300
-        items_text = self.small_font.render("ITEMS:", True, WHITE)
+        items_text = self.small_font.render("ITEMS:", True, Constances.WHITE)
         self.screen.blit(items_text, (hud_x, items_y))
         
         for i, (item, count) in enumerate(self.player.items.items()):
-            item_text = self.small_font.render(f"{i+1}. {item.title()}: {count}", True, WHITE)
+            item_text = self.small_font.render(f"{i+1}. {item.title()}: {count}", True, Constances.WHITE)
             self.screen.blit(item_text, (hud_x, items_y + 30 + i * 25))
         
-        # PowerUps
+# PowerUps
         powerups_y = 400
-        powerups_text = self.small_font.render("POWERUPS:", True, WHITE)
+        powerups_text = self.small_font.render("POWERUPS:", True, Constances.WHITE)
         self.screen.blit(powerups_text, (hud_x, powerups_y))
         
         for i, (power, count) in enumerate(self.player.powerups.items()):
-            power_text = self.small_font.render(f"{'Q' if i == 0 else 'E'}. {power.title()}: {count}", True, WHITE)
+            power_text = self.small_font.render(f"{'Q' if i == 0 else 'E'}. {power.title()}: {count}", True, Constances.WHITE)
             self.screen.blit(power_text, (hud_x, powerups_y + 30 + i * 25))
         
-        # Controles
+# Controles
         controls_y = 500
-        controls_text = self.small_font.render("CONTROLES:", True, WHITE)
+        controls_text = self.small_font.render("CONTROLES:", True, Constances.WHITE)
         self.screen.blit(controls_text, (hud_x, controls_y))
         
         control_info = [
@@ -863,61 +825,64 @@ class BombermanGame:
         ]
         
         for i, control in enumerate(control_info):
-            control_text = self.small_font.render(control, True, GRAY)
+            control_text = self.small_font.render(control, True, Constances.GRAY)
             self.screen.blit(control_text, (hud_x, controls_y + 30 + i * 20))
 
+# Dibujo de configuracion
     def draw_settings(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        title = self.font.render("Configuración", True, YELLOW)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 150))
+        title = self.font.render("Configuración", True, Constances.YELLOW)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 150))
         self.screen.blit(title, title_rect)
         
         music_status = "Activada" if self.music_enabled else "Desactivada"
-        music_text = self.font.render(f"Música: {music_status}", True, WHITE)
-        music_rect = music_text.get_rect(center=(WINDOW_WIDTH // 2, 250))
+        music_text = self.font.render(f"Música: {music_status}", True, Constances.WHITE)
+        music_rect = music_text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 250))
         self.screen.blit(music_text, music_rect)
         
-        instruction = self.small_font.render("Presiona M para cambiar música", True, GRAY)
-        instruction_rect = instruction.get_rect(center=(WINDOW_WIDTH // 2, 300))
+        instruction = self.small_font.render("Presiona M para cambiar música", True, Constances.GRAY)
+        instruction_rect = instruction.get_rect(center=(Constances.WINDOW_WIDTH // 2, 300))
         self.screen.blit(instruction, instruction_rect)
         
-        back = self.small_font.render("ESC para volver", True, GRAY)
-        back_rect = back.get_rect(center=(WINDOW_WIDTH // 2, 400))
+        back = self.small_font.render("ESC para volver", True, Constances.GRAY)
+        back_rect = back.get_rect(center=(Constances.WINDOW_WIDTH // 2, 400))
         self.screen.blit(back, back_rect)
 
+# Dibujo de puntajes 
     def draw_scores(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        title = self.font.render("Mejores Puntajes", True, YELLOW)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 100))
+        title = self.font.render("Mejores Puntajes", True, Constances.YELLOW)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 100))
         self.screen.blit(title, title_rect)
         
         if not self.high_scores:
-            no_scores = self.font.render("No hay puntajes registrados", True, WHITE)
-            no_scores_rect = no_scores.get_rect(center=(WINDOW_WIDTH // 2, 300))
+            no_scores = self.font.render("No hay puntajes registrados", True, Constances.WHITE)
+            no_scores_rect = no_scores.get_rect(center=(Constances.WINDOW_WIDTH // 2, 300))
             self.screen.blit(no_scores, no_scores_rect)
         else:
-            headers = self.small_font.render("Pos. | Nombre | Puntos | Tiempo | Nivel", True, YELLOW)
-            headers_rect = headers.get_rect(center=(WINDOW_WIDTH // 2, 180))
+            headers = self.small_font.render("Pos. | Nombre | Puntos | Tiempo | Nivel", True, Constances.YELLOW)
+            headers_rect = headers.get_rect(center=(Constances.WINDOW_WIDTH // 2, 180))
             self.screen.blit(headers, headers_rect)
             
             for i, score in enumerate(self.high_scores[:5]):
                 time_str = f"{score['time'] // 1000}s"
                 score_line = f"{i+1:2d}.  | {score['name']:8s} | {score['score']:6d} | {time_str:6s} | {score['level']:2d}"
-                score_text = self.small_font.render(score_line, True, WHITE)
-                score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, 220 + i * 40))
+                score_text = self.small_font.render(score_line, True, Constances.WHITE)
+                score_rect = score_text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 220 + i * 40))
                 self.screen.blit(score_text, score_rect)
         
-        back = self.small_font.render("ESC para volver", True, GRAY)
-        back_rect = back.get_rect(center=(WINDOW_WIDTH // 2, 500))
+        back = self.small_font.render("ESC para volver", True, Constances.GRAY)
+        back_rect = back.get_rect(center=(Constances.WINDOW_WIDTH // 2, 500))
         self.screen.blit(back, back_rect)
 
+# Dibujo de informacion 
     def draw_info(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        title = self.font.render("Información", True, YELLOW)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 80))
+        title = self.font.render("Información", True, Constances.YELLOW)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 80))
         self.screen.blit(title, title_rect)
         
         info_lines = [
@@ -925,7 +890,7 @@ class BombermanGame:
             "",
             "Desarrollado para:",
             "Instituto Tecnológico de Costa Rica",
-            "Escuela de Ingeniería en Computación",
+            "Escuela de Ingeniería en Computadores",
             "Curso: Introducción a la Programación",
             "",
             "Profesores:",
@@ -936,26 +901,27 @@ class BombermanGame:
             "País: Costa Rica",
             "",
             "Objetivo:",
-            "Encuentra la llave y llega a la puerta",
-            "para avanzar al siguiente nivel.",
-            "Evita enemigos y usa bombas sabiamente."
+            "Avanza por los niveles hasta encontrar la llave oder ir a la puerta",
+            "pero, ten cuidado si no es la puerta correcta puedes terminar en un lugar no deseado.",
+            "Evita los enemigos y ten cuidaddo con tus propias bombas."
         ]
         
         for i, line in enumerate(info_lines):
-            color = YELLOW if line and line[0].isupper() and ":" in line else WHITE
+            color = Constances.YELLOW if line and line[0].isupper() and ":" in line else Constances.WHITE
             text = self.small_font.render(line, True, color)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 140 + i * 25))
+            text_rect = text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 140 + i * 25))
             self.screen.blit(text, text_rect)
         
-        back = self.small_font.render("ESC para volver", True, GRAY)
-        back_rect = back.get_rect(center=(WINDOW_WIDTH // 2, 650))
+        back = self.small_font.render("ESC para volver", True, Constances.GRAY)
+        back_rect = back.get_rect(center=(Constances.WINDOW_WIDTH // 2, 650))
         self.screen.blit(back, back_rect)
 
+# Dibujoo de game over 
     def draw_game_over(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        title = self.big_font.render("JUEGO TERMINADO", True, RED)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 200))
+        title = self.big_font.render("JUEGO TERMINADO", True,Constances.RED)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 200))
         self.screen.blit(title, title_rect)
         
         # Estadísticas finales
@@ -969,22 +935,23 @@ class BombermanGame:
         ]
         
         for i, stat in enumerate(stats):
-            text = self.font.render(stat, True, WHITE)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 300 + i * 50))
+            text = self.font.render(stat, True, Constances.WHITE)
+            text_rect = text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 300 + i * 50))
             self.screen.blit(text, text_rect)
         
-        continue_text = self.small_font.render("Presiona SPACE para continuar", True, GRAY)
-        continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, 550))
+        continue_text = self.small_font.render("Presiona SPACE para continuar", True, Constances.GRAY)
+        continue_rect = continue_text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 550))
         self.screen.blit(continue_text, continue_rect)
 
+# Dibujo de nivel completado
     def draw_level_complete(self):
-        self.screen.fill(BLACK)
+        self.screen.fill(Constances.BLACK)
         
-        title = self.big_font.render("¡NIVEL COMPLETADO!", True, GREEN)
-        title_rect = title.get_rect(center=(WINDOW_WIDTH // 2, 200))
+        title = self.big_font.render("¡NIVEL COMPLETADO!", True, Constances.GREEN)
+        title_rect = title.get_rect(center=(Constances.WINDOW_WIDTH // 2, 200))
         self.screen.blit(title, title_rect)
         
-        # Estadísticas del nivel
+# Estadísticas del nivel
         level_time = (pygame.time.get_ticks() - self.level_start_time) // 1000
         
         stats = [
@@ -994,8 +961,8 @@ class BombermanGame:
         ]
         
         for i, stat in enumerate(stats):
-            text = self.font.render(stat, True, WHITE)
-            text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 300 + i * 50))
+            text = self.font.render(stat, True, Constances.WHITE)
+            text_rect = text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 300 + i * 50))
             self.screen.blit(text, text_rect)
         
         if self.current_level < self.max_levels:
@@ -1003,10 +970,11 @@ class BombermanGame:
         else:
             next_text = "Presiona SPACE para terminar"
             
-        continue_text = self.small_font.render(next_text, True, GRAY)
-        continue_rect = continue_text.get_rect(center=(WINDOW_WIDTH // 2, 500))
+        continue_text = self.small_font.render(next_text, True, Constances.GRAY)
+        continue_rect = continue_text.get_rect(center=(Constances.WINDOW_WIDTH // 2, 500))
         self.screen.blit(continue_text, continue_rect)
 
+# Dibujo esenario
     def draw(self):
         if self.state == GameState.MENU:
             self.draw_menu()
@@ -1025,47 +993,22 @@ class BombermanGame:
         elif self.state == GameState.LEVEL_COMPLETE:
             self.draw_level_complete()
 
+# Funcion de correr el juego con todas sus funcionalidades
     def run(self):
         while self.running:
             for event in pygame.event.get():
                 self.handle_input(event)
-            
-            self.update()
+                self.update()
             self.draw()
-            
             pygame.display.flip()
-            self.clock.tick(FPS)
-        
+            self.clock.tick(Constances.FPS)
         pygame.quit()
 
+# Funcion principal 
 def main():
     game = BombermanGame()
     game.run()
 
+# Cierre del juego 
 if __name__ == "__main__":
     main()
-
-
-# README para el proyecto
-# ==================================================================================================================================
-# Controles:
-# - WASD: Mover jugador
-# - SPACE: Colocar bomba
-# - 1-3: Usar items (velocidad, bombas extra, rango)
-# - Q, E: Usar powerups (vida, daño)
-# - ESC: Volver al menú
-# 
-# Características implementadas:
-# - 4 niveles progresivos con boss fight final
-# - 3 personajes jugables con diferentes estadísticas
-# - Sistema de vidas y puntuación
-# - Enemigos con diferentes comportamientos
-# - Items y powerups
-# - Sistema de explosiones con propagación
-# - Guardado de mejores puntajes
-# - Múltiples pantallas (menú, configuración, etc.)
-# - Ambientación de niveles
-# 
-# El objetivo es encontrar la llave oculta en los bloques
-# destructibles y llegar a la puerta para avanzar al siguiente nivel.
-# ¡Cuidado con los enemigos y las explosiones!

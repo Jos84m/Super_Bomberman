@@ -5,7 +5,7 @@ import math
 
 
 class Character:
-    def __init__(self, name: str, health: int, bomb_damage: int, max_bombs: int, special_ability: str, color: tuple):
+    def __init__(self, name, health, bomb_damage, max_bombs, special_ability, color):
         self.name = name
         self.health = health
         self.max_health = health
@@ -15,12 +15,15 @@ class Character:
         self.color = color
         self.x = 1
         self.y = 1
-        self.speed = 2
+        self.score = 0
         self.bombs_placed = 0
         self.has_key = False
-        self.score = 0
+        self.invulnerable_time = 0
         self.items = {"speed": 0, "bombs": 0, "range": 0}
         self.powerups = {"health": 0, "damage": 0}
         self.last_move_time = 0
-        self.invulnerable_time = 0
 
+# to do ------------------------------------------------------------------------
+# El dibujo del personaje
+# Sonido de pasos = (dependiendo el material que pise)
+# 

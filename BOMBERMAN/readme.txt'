@@ -1,0 +1,24 @@
+
+# README para el proyecto
+# ==================================================================================================================================
+# Controles:
+# - WASD: Mover jugador
+# - SPACE: Colocar bomba
+# - 1-3: Usar items (velocidad, bombas extra, rango)
+# - Q, E: Usar powerups (vida, daño)
+# - ESC: Volver al menú
+# 
+# Características implementadas:
+# - 4 niveles progresivos con boss fight final
+# - 3 personajes jugables con diferentes estadísticas
+# - Sistema de vidas y puntuación
+# - Enemigos con diferentes comportamientos
+# - Items y powerups
+# - Sistema de explosiones con propagación
+# - Guardado de mejores puntajes
+# - Múltiples pantallas (menú, configuración, etc.)
+# - Ambientación de niveles
+# 
+# El objetivo es encontrar la llave oculta en los bloques
+# destructibles y llegar a la puerta para avanzar al siguiente nivel.
+# ¡Cuidado con los enemigos y las explosiones!
