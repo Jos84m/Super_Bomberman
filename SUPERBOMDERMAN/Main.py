@@ -11,17 +11,6 @@ from level_map import LevelMap
 from level1_window import LevelWindow1
 from Pet import Pet
 
-import pygame
-import os
-import sys
-from PIL import Image
-from volume_settings import VolumeSettings
-from volume_window import VolumeConfigWindow
-from about_window import AboutWindow
-from game_window import GameWindow   
-from loading_screen import LoadingScreen
-from level_map import LevelMap
-from level1_window import LevelWindow1
 
 class BombermanGame:
     def __init__(self):
