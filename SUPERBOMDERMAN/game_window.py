@@ -8,6 +8,10 @@ class GameWindow:
         self.screen = screen
         self.clock = clock
         self.running = True
+        self.nivel = 1  # si estás usando selección de niveles
+
+    def set_level(self, nivel):
+        self.nivel = nivel
 
         # Mapa guía
         self.map_frames = self.load_map_guide()
@@ -52,7 +56,16 @@ class GameWindow:
 
     def run(self):
         self.show_loading_screen()
+        self.running = True  # por si se llama varias veces
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
 
+            self.screen.fill((0, 0, 0))
+            # Aquí iría la lógica del juego
+            pygame.display.flip()
+            self.clock.tick(60)
         while self.running:
             self.clock.tick(60)
 
