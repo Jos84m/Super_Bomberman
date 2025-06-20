@@ -35,7 +35,6 @@ class LevelWindow1:
         self.heart_image = pygame.image.load(os.path.join("assets", "heart.png")).convert_alpha()
         self.heart_image = pygame.transform.scale(self.heart_image, (32, 32))
 
-        
         self.level_map = [
             list("###############"),
             list("#P            #"),
@@ -136,8 +135,23 @@ class LevelWindow1:
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     self.running = False
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    bomb = Bomb(self.player.x, self.player.y)
+                    bomb = Bomb(self.player.x, self.player.y, os.path.join("assets", "bomb.png"), self.tile_size)
                     self.bombs.append(bomb)
+
+            # --- Movimiento del jugador ---
+            keys = pygame.key.get_pressed()
+            dx, dy = 0, 0
+            if keys[pygame.K_LEFT]:
+                dx = -1
+            elif keys[pygame.K_RIGHT]:
+                dx = 1
+            elif keys[pygame.K_UP]:
+                dy = -1
+            elif keys[pygame.K_DOWN]:
+                dy = 1
+            if dx != 0 or dy != 0:
+                self.player.move(dx, dy, self.level_map, self.tile_size, self.start_x, self.start_y)
+            # --- Fin movimiento del jugador ---
 
             # Fondo animado
             self.screen.blit(pygame.transform.scale(self.frames[self.current_frame], self.screen.get_size()), (0, 0))
@@ -181,8 +195,7 @@ class LevelWindow1:
                                 y = self.start_y + row_idx * self.tile_size
                                 block_rect = pygame.Rect(x, y, self.tile_size, self.tile_size)
                                 if explosion.get_rect().colliderect(block_rect):
-                                 self.level_map[row_idx][col_idx] = ' '
-
+                                    self.level_map[row_idx][col_idx] = ' '
 
             # Dibujar jugador y enemigos
             self.player.draw(self.screen)

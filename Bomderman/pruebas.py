@@ -1,15 +1,12 @@
-
-
 import pygame
 import os
 from PIL import Image
 from volume_settings import VolumeSettings
 from volume_window import VolumeConfigWindow
 from about_window import AboutWindow
-from game_window import GameWindow   # Aquí importamos la clase
 from loading_screen import LoadingScreen
 from level_map import LevelMap
-
+from level1_window import LevelWindow1
 
 class BombermanGame:
     def __init__(self):
@@ -42,8 +39,6 @@ class BombermanGame:
         self.options_button = None
         self.exit_button = None
         self.about_button = None
-
-        self.game_window = GameWindow(self.screen, self.clock)
 
     def load_resources(self):
         ap = "assets"
@@ -105,16 +100,23 @@ class BombermanGame:
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if self.start_button.collidepoint(e.pos):
                     self.click_sound.play()
-                    # Cargar pantalla de carga
                     loader = LoadingScreen(self.screen)
-                    loader.run()
-
-                    # Mapa guía
+                    loader.run(duration=3000)
+                    
                     mapa = LevelMap(self.screen)
-                    mapa.run()
-
-                    # Juego real
-                    self.game_window.run()
+                    if mapa.run():  
+                        level1 = LevelWindow1(
+                            self.screen,
+                            self.clock,
+                            os.path.join("assets", "Bg2.gif"),
+                            {
+                                "name": "Bomberman",
+                                "gif_path": "assets/player1.gif",
+                                "lives": 3,
+                                "speed": 2
+                            }
+                        )    
+                        level1.run()
 
                 elif self.options_button.collidepoint(e.pos):
                     self.click_sound.play()
@@ -125,10 +127,6 @@ class BombermanGame:
                 elif self.exit_button.collidepoint(e.pos):
                     self.click_sound.play()
                     self.running = False
-                    if self.start_button.collidepoint(e.pos):
-                        self.click_sound.play()
-                        self.game_window = GameWindow(self.screen, self.clock)
-                        self.game_window.run()
 
     def run(self):
         while self.running:

@@ -25,10 +25,15 @@ class LevelMap:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                    return False  # Usuario cerró la ventana
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        self.running = False  # Continúa al juego real
-
+                        self.running = False
+                        return True  # Usuario quiere continuar
+                    elif event.key == pygame.K_ESCAPE:
+                        self.running = False
+                        return False  # Usuario quiere volver al menú
+                    
             self.screen.blit(self.frames[frame_index], (0, 0))
             pygame.display.flip()
             frame_index = (frame_index + 1) % len(self.frames)

@@ -108,12 +108,16 @@ class BombermanGame:
 
     def start_level1(self):
         self.click_sound.play()
+        print("Mostrando pantalla de carga")
         loader = LoadingScreen(self.screen)
-        loader.run()
+        loader.run(duration=3000)
+        print("Mostrando mapa guía")
         mapa = LevelMap(self.screen)
         mapa.run()
+        print("Entrando al nivel")
         level1 = LevelWindow1(self.screen, self.clock, os.path.join("assets", "Bg2.gif"), self.selected_character)
         level1.run()
+        print("Nivel terminado")
         pygame.mixer.music.play(-1)
 
     def handle_events(self):

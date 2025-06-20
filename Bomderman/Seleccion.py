@@ -33,11 +33,7 @@ class CharacterSelectWindow:
 
     def draw_background(self):
         self.screen.fill((20, 20, 20))
-        # O puedes usar una imagen de fondo:
-        # background = pygame.image.load("assets/background.png").convert()
-        # background = pygame.transform.scale(background, self.screen.get_size())
-        # self.screen.blit(background, (0, 0))
-
+        
     def draw_arrows(self):
         arrow_font = pygame.font.SysFont("Arial", 60, bold=True)
         left_arrow = arrow_font.render("<", True, (255, 255, 255))

@@ -63,7 +63,6 @@ class GameWindow:
                     self.running = False
 
             self.screen.fill((0, 0, 0))
-            # Aquí iría la lógica del juego
             pygame.display.flip()
             self.clock.tick(60)
         while self.running:

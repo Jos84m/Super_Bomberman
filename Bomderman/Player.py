@@ -58,3 +58,7 @@ class Player:
             screen.blit(self.image, (self.x, self.y))
         if self.pet:
             self.pet.draw(screen)
+
+    def hurt(self):
+        # Puedes agregar animación de daño o efectos aquí si quieres
+        pass
