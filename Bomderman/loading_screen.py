@@ -7,7 +7,6 @@ class LoadingScreen:
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.frames = self.load_gif_frames(os.path.join("assets", "loading.gif"))
-        self.running = True
 
     def load_gif_frames(self, path):
         gif = Image.open(path)
@@ -31,4 +30,4 @@ class LoadingScreen:
             self.screen.blit(self.frames[frame_index], (0, 0))
             pygame.display.flip()
             frame_index = (frame_index + 1) % len(self.frames)
-            self.clock.tick(12)
+            self.clock.tick(6)  

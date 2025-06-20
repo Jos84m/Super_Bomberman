@@ -141,13 +141,13 @@ class LevelWindow1:
             # --- Movimiento del jugador ---
             keys = pygame.key.get_pressed()
             dx, dy = 0, 0
-            if keys[pygame.K_LEFT]:
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 dx = -1
-            elif keys[pygame.K_RIGHT]:
+            elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                 dx = 1
-            elif keys[pygame.K_UP]:
+            elif keys[pygame.K_UP] or keys[pygame.K_w]:
                 dy = -1
-            elif keys[pygame.K_DOWN]:
+            elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 dy = 1
             if dx != 0 or dy != 0:
                 self.player.move(dx, dy, self.level_map, self.tile_size, self.start_x, self.start_y)

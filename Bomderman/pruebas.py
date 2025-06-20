@@ -7,6 +7,7 @@ from about_window import AboutWindow
 from loading_screen import LoadingScreen
 from level_map import LevelMap
 from level1_window import LevelWindow1
+from Seleccion import CharacterSelectWindow
 
 class BombermanGame:
     def __init__(self):
@@ -14,6 +15,8 @@ class BombermanGame:
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((800, 600))
         pygame.display.set_caption("Bomberman Ultimate")
+        icon = pygame.image.load(os.path.join("assets", "icon.png"))
+        pygame.display.set_icon(icon)
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -44,7 +47,8 @@ class BombermanGame:
         ap = "assets"
         self.click_sound = pygame.mixer.Sound(os.path.join(ap, "Cursor.mp3"))
         self.hover_sound = pygame.mixer.Sound(os.path.join(ap, "Select.mp3"))
-        pygame.mixer.music.load(os.path.join(ap, "Music.mp3"))
+        self.characterselect_sound = pygame.mixer.Sound(os.path.join(ap, "Character Select.mp3"))
+        pygame.mixer.music.load(os.path.join(ap, "Title screen.mp3"))
         pygame.mixer.music.play(-1)
 
     def load_background_gif(self):
@@ -100,23 +104,58 @@ class BombermanGame:
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if self.start_button.collidepoint(e.pos):
                     self.click_sound.play()
-                    loader = LoadingScreen(self.screen)
-                    loader.run(duration=3000)
-                    
-                    mapa = LevelMap(self.screen)
-                    if mapa.run():  
-                        level1 = LevelWindow1(
-                            self.screen,
-                            self.clock,
-                            os.path.join("assets", "Bg2.gif"),
-                            {
-                                "name": "Bomberman",
-                                "gif_path": "assets/player1.gif",
-                                "lives": 3,
-                                "speed": 2
-                            }
-                        )    
-                        level1.run()
+                    # Cambia la música a Character Select
+                    pygame.mixer.music.stop()
+                    pygame.mixer.music.load(os.path.join("assets", "Character Select.mp3"))
+                    pygame.mixer.music.play(-1)
+                    # Selección de personaje
+                    while True:
+                        select = CharacterSelectWindow(self.screen, self.clock, [
+                            {"name": "Bomberman", "gif_path": "assets/player1.gif", "lives": 3, "speed": 2},
+                            {"name": "Ninja", "gif_path": "assets/player2.gif", "lives": 2, "speed": 3},
+                            {"name": "Tank", "gif_path": "assets/player3.gif", "lives": 5, "speed": 1}
+                        ])
+                        selected_character = select.run()
+                        if not selected_character:
+                            # Si el usuario cancela, vuelve la música del menú principal
+                            pygame.mixer.music.stop()
+                            pygame.mixer.music.load(os.path.join("assets", "Title screen.mp3"))
+                            pygame.mixer.music.play(-1)
+                            return
+
+                        loader = LoadingScreen(self.screen)
+                        loader.run(duration=3000)
+
+                        while True:
+                            # Música del mapa
+                            pygame.mixer.music.stop()
+                            pygame.mixer.music.load(os.path.join("assets", "Map.mp3"))
+                            pygame.mixer.music.play(-1)
+                            mapa = LevelMap(self.screen)
+                            mapa_result = mapa.run()
+                            if mapa_result == "continue" or mapa_result is True:
+                                # Música del nivel 1
+                                pygame.mixer.music.stop()
+                                pygame.mixer.music.load(os.path.join("assets", "Level 1.mp3"))
+                                pygame.mixer.music.play(-1)
+                                level1 = LevelWindow1(
+                                    self.screen,
+                                    self.clock,
+                                    os.path.join("assets", "Bg2.gif"),
+                                    selected_character
+                                )
+                                level1.run()
+                                # Al terminar el nivel, vuelve la música del menú principal
+                                pygame.mixer.music.stop()
+                                pygame.mixer.music.load(os.path.join("assets", "Title screen.mp3"))
+                                pygame.mixer.music.play(-1)
+                                return  # Salir al menú principal después del nivel
+                            elif mapa_result == "back" or mapa_result is False:
+                                # Si vuelve a selección de personaje, cambia la música
+                                pygame.mixer.music.stop()
+                                pygame.mixer.music.load(os.path.join("assets", "Character Select.mp3"))
+                                pygame.mixer.music.play(-1)
+                                break  # Volver a selección de personaje
 
                 elif self.options_button.collidepoint(e.pos):
                     self.click_sound.play()

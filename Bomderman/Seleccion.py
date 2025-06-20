@@ -2,9 +2,6 @@ import pygame
 from PIL import Image, ImageSequence
 import os
 
-import pygame
-from PIL import Image, ImageSequence
-
 class CharacterSelectWindow:
     def __init__(self, screen, clock, characters):
         self.screen = screen
@@ -52,9 +49,9 @@ class CharacterSelectWindow:
         character_image = frames[self.current_frame]
         center_x = self.screen.get_width() // 2
 
-        # Fondo del personaje
-        pygame.draw.rect(self.screen, (50, 50, 50), (center_x - 90, 110, 180, 220), border_radius=15)
-        pygame.draw.rect(self.screen, (200, 200, 200), (center_x - 90, 110, 180, 220), 2, border_radius=15)
+        # Fondo del personaje (más grande)
+        pygame.draw.rect(self.screen, (50, 50, 50), (center_x - 120, 110, 240, 300), border_radius=15)
+        pygame.draw.rect(self.screen, (200, 200, 200), (center_x - 120, 110, 240, 300), 2, border_radius=15)
 
         # Imagen
         self.screen.blit(character_image, (center_x - 64, 130))
@@ -69,7 +66,7 @@ class CharacterSelectWindow:
         speed = self.characters[self.selected_index]["speed"]
         info_text = f"Vidas: {lives}   Velocidad: {speed}"
         info_surface = self.info_font.render(info_text, True, (200, 200, 200))
-        self.screen.blit(info_surface, (center_x - info_surface.get_width() // 2, 310))
+        self.screen.blit(info_surface, (center_x - info_surface.get_width() // 2, 330))
 
     def run(self):
         while self.running:
@@ -79,24 +76,22 @@ class CharacterSelectWindow:
                     self.running = False
                     return None
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         self.selected_index = (self.selected_index + 1) % len(self.characters)
                         self.current_frame = 0
-                    elif event.key == pygame.K_LEFT:
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                         self.selected_index = (self.selected_index - 1) % len(self.characters)
                         self.current_frame = 0
                     elif event.key == pygame.K_RETURN:
                         self.running = False
                         return self.characters[self.selected_index]
+                    elif event.key == pygame.K_ESCAPE:
+                        self.running = False
+                        return None
 
             self.draw_background()
-
-            # Título
             text = self.title_font.render("Selecciona tu personaje", True, (255, 255, 255))
             self.screen.blit(text, (self.screen.get_width() // 2 - text.get_width() // 2, 40))
-
             self.draw_arrows()
             self.draw_character_card()
-
             pygame.display.flip()
-
