@@ -1,5 +1,3 @@
-# volume_window.py
-
 import pygame
 from pygame.locals import *
 
@@ -25,10 +23,13 @@ class VolumeConfigWindow:
     def draw_toggle_button(self, state, y):
         text = "Música: Activada" if state else "Música: Desactivada"
         color = (0, 200, 0) if state else (200, 0, 0)
-        rect = pygame.Rect(300, y, 200, 40)
-        pygame.draw.rect(self.screen, color, rect)
+        rect_width = 240
+        rect_height = 40
+        rect = pygame.Rect(300, y, rect_width, rect_height)
+        pygame.draw.rect(self.screen, color, rect, border_radius=8)
         label = self.font.render(text, True, (255, 255, 255))
-        self.screen.blit(label, (rect.x + 10, rect.y + 5))
+        label_pos = (rect.x + 15, rect.y + (rect.height - label.get_height()) // 2)
+        self.screen.blit(label, label_pos)
         return rect
 
     def run(self):

@@ -1,8 +1,6 @@
 import pygame
 import sys
 
-# volume_settings.py
-
 class VolumeSettings:
     def __init__(self):
         self.music_volume = 0.5
@@ -18,3 +16,5 @@ class VolumeSettings:
     def set_effects_volume(self, volume):
         self.effects_volume = max(0.0, min(1.0, volume))
 
+    def get_music_volume(self):
+        return self.music_volume if self.music_enabled else 0.0

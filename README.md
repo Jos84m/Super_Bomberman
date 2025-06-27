@@ -1,2 +1,2 @@
-# Super_Bomberman
-En este proyecto se crea un juego basado, en super bomderman con las funciones basicas de este juego ademas de que creamos una interfaz mejor a la hora de animaciones, e interaccion de persoanjes  con su entorno. Ademas de tener boss fiinal y un mister egg como algo diferente y personalizado con dos finales que las personas puede escoger
+# Bomberman Ultimate
+En este proyecto se crea un juego basado, en Super Bomderman con las funciones básicas de este juego. Además creamos una interfaz que muestra el laberinto de los niveles con una HUD que muestra el nivel actual, los ítems obtenidos (no confundir con los Power Ups), si el jugador tiene la llave o no, las vidas del jugador, su puntaje en el nivel actual y el tiempo que tarda en completarlo. Antes de la batalla final en el nivel 4 contra el jefe, hay un pequeño diálogo con este mismo.

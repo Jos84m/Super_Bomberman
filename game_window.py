@@ -35,8 +35,7 @@ class GameWindow:
                 )
                 frame_surface = pygame.transform.scale(frame_surface, (800, 600))
                 frames.append(frame_surface)
-        except Exception as e:
-            print("⚠️ Error al cargar el GIF:", e)
+        except Exception:
             surface = pygame.Surface((800, 600))
             surface.fill((0, 0, 0))
             frames.append(surface)
