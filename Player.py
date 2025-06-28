@@ -42,13 +42,30 @@ class Player:
         self.invuln_timer = 0
         self.invuln_duration = 90  # 1.5 segundos a 60 FPS
 
-        # NUEVAS VARIABLES PARA POWER-UPS Y LLAVE
         self.has_key = False
 
-        self.max_bombs = 1
-        self.bombs_placed = 0
         self.explosion_range = 1
         self.damage = 1
+
+        # Variables para habilidad especial (ulti)
+        self.special_cooldown = 30  # segundos
+        self.special_timer = 0  # segundos restantes para cooldown
+        self.special_active = False
+        self.special_duration = 5  # duración en segundos (para ulti de azul y negro)
+        self.special_start_time = 0
+
+        # --- Buff de velocidad (Blue Bomberman) ---
+        self._speedboost_active = False
+        self._speedboost_timer = 0
+        self._speedboost_amount = 0
+        
+        # Asignar bombas iniciales según personaje
+        if "BLB" in sprite_prefix:
+            self.bombs_available = 10
+        elif "BB" in sprite_prefix:
+            self.bombs_available = 20
+        else:
+            self.bombs_available = 15
 
         self.can_take_damage = True
         self.damage_cooldown_timer = 0
@@ -224,15 +241,11 @@ class Player:
     # Métodos para power-ups y llave
 
     def can_place_bomb(self):
-        return self.bombs_placed < self.max_bombs
+        return self.bombs_available > 0
 
     def place_bomb(self):
         if self.can_place_bomb():
-            self.bombs_placed += 1
-
-    def bomb_exploded(self):
-        if self.bombs_placed > 0:
-            self.bombs_placed -= 1
+            self.bombs_available -= 1
 
     def pick_key(self):
         self.has_key = True
@@ -247,7 +260,7 @@ class Player:
 
     def collect_item(self, item_type):
         # Power-ups que se activan inmediatamente al recoger
-        if item_type in ["heart", "damage_increase"]:
+        if item_type in ["heart", "damage_increase", "extra_bombs"]:
             self.apply_item_effect(item_type)
             return
         
@@ -289,7 +302,7 @@ class Player:
         if item_type == "accelerator":
             self.speed += 2
         elif item_type == "extra_bombs":
-            self.max_bombs += 2
+            self.bombs_available += 5
         elif item_type == "explosion_expander":
             self.explosion_range += 2
         elif item_type == "heart":
@@ -300,7 +313,6 @@ class Player:
     def reset_item_effect(self):
         # Reiniciar stats a valores base (puedes ajustarlo según tus valores)
         self.speed = self.base_speed
-        self.max_bombs = 1
         self.explosion_range = 1
 
     def get_items_for_hud(self):
@@ -315,8 +327,78 @@ class Player:
                 self.can_take_damage = True
                 self.damaged_by_explosion = False  # Resetear para próximas explosiones
 
+        # Controlar si el speedboost sigue activo
+        if hasattr(self, "_speedboost_active") and self._speedboost_active:
+            self._speedboost_timer -= 1
+            if self._speedboost_timer <= 0:
+                self.speed -= self._speedboost_amount
+                self._speedboost_active = False
+
+        # Actualizar estado de ulti
+        self.update_special()
+
     def lose_life_from_explosion(self):
         if self.damaged_by_explosion:
             return  # Ya recibió daño por explosión en este cooldown
         self.lose_life()
         self.damaged_by_explosion = True
+
+    def activate_special(self):
+        # Solo se activa si no está en cooldown
+        if self.special_timer > 0 or self.special_active:
+            return False  # No puede activar
+
+        personaje = self.sprite_prefix
+
+        now = time.time()
+        self.special_start_time = now
+        self.special_active = True
+
+        if "WB" in personaje and "BLB" not in personaje and "BB" not in personaje: # Bomberman
+            # Bola de fuego
+            pass
+
+        elif "BLB" in personaje:  # Blue Bomberman
+            # Aumenta velocidad +3
+            self.speed = self.base_speed + 3
+
+        elif "BB" in personaje:  # Black Bomberman
+            # Invulnerable
+            self.invulnerable = True
+            self.invuln_timer = 0  # reiniciar contador
+
+        return True
+    
+    def update_special(self):
+        now = time.time()
+        if self.special_active:
+            elapsed = now - self.special_start_time
+            if elapsed >= self.special_duration:
+                # Terminar efecto especial
+                self.special_active = False
+                self.special_timer = self.special_cooldown
+                # Resetear efectos según personaje
+                if "BLB" in self.sprite_prefix:
+                    self.speed = self.base_speed
+                elif "BB" in self.sprite_prefix:
+                    self.invulnerable = False
+
+        elif self.special_timer > 0:
+            # Reducir cooldown
+            self.special_timer -= 1/60  # Asumiendo update se llama aprox 60 fps
+            if self.special_timer < 0:
+                self.special_timer = 0
+
+    def activate_invulnerability(self, duration=5):
+        # Activa la invulnerabilidad por 5 segundos.
+        self.invulnerable = True
+        self.invuln_timer = 0
+        self.invuln_duration = duration * 60
+
+    def activate_speedboost(self, duration=5, speed_increase=3):
+        # Activa un aumento de velocidad por 5 segundos.
+        self.speed += speed_increase
+        self._speedboost_duration = duration * 60
+        self._speedboost_timer = self._speedboost_duration
+        self._speedboost_amount = speed_increase
+        self._speedboost_active = True

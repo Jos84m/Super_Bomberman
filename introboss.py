@@ -145,7 +145,7 @@ class HumoToxico:
         pygame.draw.circle(humo_surf, color_con_alpha, (self.tamaño, self.tamaño), self.tamaño)
         superficie.blit(humo_surf, (self.x - self.tamaño, self.y - self.tamaño))
 
-# Clase para el Boss Bomberman Oscuro
+# Clase para el Boss BIGARON
 class BossBomberman:
     def __init__(self):
         self.x = ANCHO // 2
@@ -231,7 +231,7 @@ class BossBomberman:
                                  (bomba['x'], bomba['y'] - 15),
                                  (bomba['x'] - 5, bomba['y'] - 25), 3)
 
-# Sistema de diálogos temático de Bomberman oscuro (sin cambios)
+# Sistema de diálogos temático de BIGARON
 class SistemaDialogoOscuro:
     def __init__(self):
         self.dialogos = [

@@ -11,7 +11,7 @@ from Item import Item
 from Flying_Enemy import FlyingEnemy
 from projectile import Projectile
 from Boss import Boss
-
+from Fireball import Fireball
 
 class LevelWindow4:
     def __init__(self, screen, clock, gif_path, selected_character, main_game, volume_settings):
@@ -47,6 +47,22 @@ class LevelWindow4:
         # Tiempo para HUD
         self.start_time = None 
         self.end_time = None
+
+        self.special_cooldown = 0  # En segundos
+        self.special_max_cooldown = 30
+
+        # Inicialización para la habilidad especial de Bomberman
+        self.fireballs = []
+        self.last_fireball_time = 0
+        self.fireball_cooldown = 30
+
+        # Inicialización para la habilidad especial de Black Bomberman
+        self.last_invuln_time = 0
+        self.invuln_cooldown = 30
+
+        # Inicialización para la habilidad especial de Blue Bomberman
+        self.last_speedboost_time = 0
+        self.speedboost_cooldown = 30
 
         # Mapa básico (vacío, excepto paredes externas)
         self.level_map = [
@@ -232,6 +248,19 @@ class LevelWindow4:
             key_x = min(start_x, max_x)
             self.screen.blit(key_surface, (key_x, y))
 
+        # Mostrar habilidad especial
+        ability_text = "E. Habilidad Especial ("
+        if self.special_cooldown <= 0:
+            ability_text += "Lista)"
+        else:
+            ability_text += f"{int(self.special_cooldown)}s)"
+        
+        ability_surface = font.render(ability_text, True, (173, 216, 230))  # celeste claro
+        ability_rect = ability_surface.get_rect()
+        ability_rect.topright = (screen_width - 15, screen_height - 35)
+        self.screen.blit(ability_surface, ability_rect)
+
+
     def handle_player_death(self):
         if self.player.lives <= 0:
             self.player.alive = False
@@ -348,7 +377,7 @@ class LevelWindow4:
                     # Poner ítem en cooldown 15 segundos
                     self.item_cooldowns[item_type] = now + 15
 
-                    self.last_item_spawn_time = now
+                    self.last_item_spawn_time = now  
 
     def draw_scene(self, move_enemies=True):
         # Fondo animado
@@ -509,6 +538,7 @@ class LevelWindow4:
         self.hud.lives = self.player.lives
         self.hud.score = self.score
         self.hud.level = 4
+        self.hud.bombs_left = self.player.bombs_available
         
         if self.level_complete and self.end_time is not None:
             elapsed = self.end_time - self.start_time
@@ -517,6 +547,12 @@ class LevelWindow4:
         self.hud.update(elapsed)
 
         self.hud.draw(self.player.get_items_for_hud())
+
+        # --- Mostrar cooldown habilidad especial en HUD ---
+        self.draw_hud(self.player.get_items_for_hud())
+
+        for fireball in self.fireballs:
+            fireball.draw(self.screen)
 
     def update_game_state(self):
         if self.level_complete:
@@ -556,7 +592,6 @@ class LevelWindow4:
             finished = bomb.update(self.level_map, self.enemies, self.flying_enemies, self.player, self.start_x, self.start_y, lambda points: setattr(self, 'score', self.score + points))
             if finished:
                 self.bombs.remove(bomb)
-                self.player.bomb_exploded()
 
         # Recoger ítems
         for item in self.items[:]:
@@ -588,6 +623,23 @@ class LevelWindow4:
                 else:
                     pygame.mixer.music.unpause()
 
+        # Actualizar bolas de fuego
+        for fireball in self.fireballs[:]:
+            result = fireball.update(self.enemies, self.flying_enemies, self.boss, self.screen.get_width(), self.screen.get_height())
+            fireball.draw(self.screen)
+
+            if result == "ground":
+                self.score += 100
+            elif result == "flying":
+                self.score += 200
+            elif result == "boss_killed":
+                self.score += 1000
+            if not fireball.active:
+                self.fireballs.remove(fireball)
+
+        # Filtrar solo las activas
+        self.fireballs = [fb for fb in self.fireballs if fb.active]
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -610,6 +662,43 @@ class LevelWindow4:
                         bomb = Bomb(bomb_x, bomb_y, os.path.join("assets", "SPRITES", "Bomb"), self.tile_size, owner_player=self.player, explosion_sound=self.bomb_explode_sound)  
                         self.bombs.append(bomb)
                         self.player.place_bomb()
+
+                elif event.key == pygame.K_e:
+                    current_time = time.time()
+                    character = self.selected_character["sprite_folder"]
+                    
+                    if character == "WB":
+                        if current_time - self.last_fireball_time >= self.fireball_cooldown:
+                            direction = self.player.last_direction
+                            dx, dy = 0, 0
+                            if direction == "Up":
+                                dy = -1
+                            elif direction == "Down":
+                                dy = 1
+                            elif direction == "Left":
+                                dx = -1
+                            elif direction == "Right":
+                                dx = 1
+                            if dx != 0 or dy != 0:
+                                fireball_x = self.player.rect.centerx
+                                fireball_y = self.player.rect.centery
+                                fireball = Fireball(fireball_x, fireball_y, (dx, dy))
+                                self.fireballs.append(fireball)
+                                self.last_fireball_time = current_time
+                                self.special_cooldown = 30  # <<< Agregado cooldown especial
+
+                    elif character == "BB":
+                        if current_time - self.last_invuln_time >= self.invuln_cooldown:
+                            self.player.activate_invulnerability(duration=5)
+                            self.last_invuln_time = current_time
+                            self.special_cooldown = 30  # <<< Agregado cooldown especial
+                            
+                    elif character == "BLB":
+                        if current_time - self.last_speedboost_time >= self.speedboost_cooldown:
+                            self.player.activate_speedboost(duration=5, speed_increase=3)
+                            self.last_speedboost_time = current_time
+                            self.special_cooldown = 30  # <<< Agregado cooldown especial
+
                 elif event.key == pygame.K_r:
                     return "reload"
         return None
@@ -635,6 +724,11 @@ class LevelWindow4:
             self.running = True
 
             while self.running:
+                dt = self.clock.get_time() / 1000  # <<< Agregado delta time
+
+                if self.special_cooldown > 0:
+                    self.special_cooldown = max(0, self.special_cooldown - dt)  # <<< Reducir cooldown
+
                 now = pygame.time.get_ticks()
                 if not self.level_started:
                     if now - self.level_start_time >= self.level_start_duration:

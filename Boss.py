@@ -4,7 +4,7 @@ import random
 import math
 from Enemy import Enemy
 from Flying_Enemy import FlyingEnemy
-from Item import Item
+from Item import Item  # Para crear la llave al morir el boss
 
 class Boss:
     def __init__(self, x, y, sprite_folder, tile_size, level):
@@ -44,8 +44,7 @@ class Boss:
 
         self.invocation_cooldown = 500
         self.invocation_timer = 0
-
-        self.damage_cooldown = 60
+        self.damage_cooldown = 60  # frames (~1 segundo)
         self.damage_timer = 0
 
     def load_sprites(self):
@@ -79,13 +78,6 @@ class Boss:
     def update(self, player):
         if not self.alive:
             return
-        
-        # Reducir cooldown de daño si es mayor que 0
-        if hasattr(self, 'damage_timer'):
-            if self.damage_timer > 0:
-                self.damage_timer -= 1
-        else:
-            self.damage_timer = 0
 
         if self.health <= 3 and self.phase == 1:
             self.phase = 2
@@ -108,6 +100,9 @@ class Boss:
 
         self.move_towards_player(player)
 
+        # Reducir cooldown de daño
+        if self.damage_timer > 0:
+            self.damage_timer -= 1
 
         # Verificar colisión con jugador y aplicar daño solo si no está en cooldown
         if self.state != "hit" and self.rect.colliderect(player.get_rect()):
@@ -162,9 +157,10 @@ class Boss:
             self.flying_enemies.append(flying_enemy)
             self.level.flying_enemies.append(flying_enemy)
 
-    def take_damage(self, amount):
+    def take_damage(self, amount=1):
+        if self.state == "hit":
+            return
         self.health -= amount
-        
         if self.health <= 0:
             self.alive = False
             key_item = Item(self.x, self.y, self.tile_size, "key")
@@ -189,6 +185,6 @@ class Boss:
             
         bar_width = self.width
         bar_height = 6
-        health_ratio = max(0, min(1, self.health / self.max_health))
+        health_ratio = self.health / self.max_health
         pygame.draw.rect(screen, (255, 0, 0), (draw_x, draw_y - 10, bar_width, bar_height))
         pygame.draw.rect(screen, (0, 255, 0), (draw_x, draw_y - 10, bar_width * health_ratio, bar_height))

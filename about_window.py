@@ -21,7 +21,7 @@ class AboutWindow:
 
         # Texto informativo
         self.text_lines = [
-            "Vintage Bomberman v1.0",
+            "Bomberman Ultimate",
             "",
             "Desarrollado para:",
             "Instituto Tecnológico de Costa Rica",

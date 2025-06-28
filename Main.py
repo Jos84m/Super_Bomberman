@@ -273,9 +273,9 @@ class BombermanGame:
                             pygame.mixer.music.unpause()
                             
                         select = CharacterSelectWindow(self.screen, self.clock, [
-                            {"name": "Bomberman", "gif_path": os.path.join("assets", "GIFS", "player1.gif"), "lives": 3, "speed": 3, "sprite_folder": "WB"},
-                            {"name": "Black Bomberman", "gif_path": os.path.join("assets", "GIFS", "player2.gif"), "lives": 5, "speed": 2, "sprite_folder": "BB"},
-                            {"name": "Blue Bomberman", "gif_path": os.path.join("assets", "GIFS", "player3.gif"), "lives": 2, "speed": 4, "sprite_folder": "BLB"}
+                            {"name": "Bomberman", "gif_path": os.path.join("assets", "GIFS", "player1.gif"), "lives": 3, "speed": 3, "sprite_folder": "WB", "bombs": 15},
+                            {"name": "Black Bomberman", "gif_path": os.path.join("assets", "GIFS", "player2.gif"), "lives": 5, "speed": 2, "sprite_folder": "BB", "bombs": 20},
+                            {"name": "Blue Bomberman", "gif_path": os.path.join("assets", "GIFS", "player3.gif"), "lives": 2, "speed": 4, "sprite_folder": "BLB", "bombs": 10}
                         ])
                         selected_character, player_name = select.run()
 

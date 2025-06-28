@@ -15,6 +15,9 @@ class CharacterSelectWindow:
         self.current_frame = 0
         self.frame_delay = 5
         self.frame_counter = 0
+
+        self.bomb_icon = pygame.image.load(os.path.join("Assets", "Sprites", "Bomb", "Bomb 1.png"))
+        self.bomb_icon = pygame.transform.scale(self.bomb_icon, (24, 24))
         
         # Sistema de nombre del jugador
         self.player_name = ""
@@ -22,6 +25,13 @@ class CharacterSelectWindow:
         self.cursor_visible = True
         self.cursor_timer = 0
         self.max_name_length = 15
+
+        # Habilidades especiales
+        self.special_abilities = {
+            "Bomberman": "Bola de fuego",
+            "Black Bomberman": "Invulnerabilidad",
+            "Blue Bomberman": "Aumento de velocidad"
+        }
 
         # Cargar frames de GIF
         for char in self.characters:
@@ -61,8 +71,8 @@ class CharacterSelectWindow:
         center_x = self.screen.get_width() // 2
 
         # Fondo del personaje
-        pygame.draw.rect(self.screen, (50, 50, 50), (center_x - 120, 110, 240, 300), border_radius=15)
-        pygame.draw.rect(self.screen, (200, 200, 200), (center_x - 120, 110, 240, 300), 2, border_radius=15)
+        pygame.draw.rect(self.screen, (50, 50, 50), (center_x - 200, 110, 390, 330), border_radius=15)
+        pygame.draw.rect(self.screen, (200, 200, 200), (center_x - 200, 110, 390, 330), 2, border_radius=15)
 
         # Imagen
         self.screen.blit(character_image, (center_x - 64, 130))
@@ -73,21 +83,42 @@ class CharacterSelectWindow:
         self.screen.blit(name_surface, (center_x - name_surface.get_width() // 2, 270))
 
         # Info adicional
-        lives = self.characters[self.selected_index]["lives"]
-        speed = self.characters[self.selected_index]["speed"]
+        char = self.characters[self.selected_index]
+        lives = char["lives"]
+        speed = char["speed"]
+        bombs = char.get("bombs", 15)
+        
         info_text = f"Vidas: {lives}   Velocidad: {speed}"
         info_surface = self.info_font.render(info_text, True, (200, 200, 200))
         self.screen.blit(info_surface, (center_x - info_surface.get_width() // 2, 330))
+
+    # Bombas iniciales con ícono
+        bomb_count = self.characters[self.selected_index].get("bombs", 0)
+        bomb_surface = self.info_font.render(f"{bomb_count}", True, (255, 255, 255))
+        x_surface = self.info_font.render("x", True, (255, 255, 255))
+        
+        bomb_x = center_x - bomb_surface.get_width() // 2 + 20
+        bomb_y = 370
+        
+        self.screen.blit(self.bomb_icon, (bomb_x - 40, bomb_y + 2))
+        self.screen.blit(x_surface, (bomb_x - 10, bomb_y))
+        self.screen.blit(bomb_surface, (bomb_x, bomb_y))
+
+        # Habilidad especial
+        special_name = self.special_abilities.get(self.characters[self.selected_index]["name"], "Desconocida")
+        special_text = f"Habilidad Especial: {special_name}"
+        special_surface = self.info_font.render(special_text, True, (180, 180, 250))
+        self.screen.blit(special_surface, (center_x - special_surface.get_width() // 2, 410))
 
     def draw_name_input(self):
         center_x = self.screen.get_width() // 2
         
         # Título para el nombre
         name_title = self.info_font.render("Ingresa tu nombre:", True, (255, 255, 255))
-        self.screen.blit(name_title, (center_x - name_title.get_width() // 2, 420))
+        self.screen.blit(name_title, (center_x - name_title.get_width() // 2, 470))
         
         # Caja de texto para el nombre
-        name_box_rect = pygame.Rect(center_x - 150, 450, 300, 40)
+        name_box_rect = pygame.Rect(center_x - 150, 500, 300, 40)
         pygame.draw.rect(self.screen, (40, 40, 40), name_box_rect)
         pygame.draw.rect(self.screen, (100, 100, 255) if self.name_active else (100, 100, 100), name_box_rect, 2)
         
@@ -108,7 +139,7 @@ class CharacterSelectWindow:
             instruction = "Presiona ENTER para jugar o ESC para salir"
         
         instruction_surface = self.instruction_font.render(instruction, True, (150, 150, 150))
-        self.screen.blit(instruction_surface, (center_x - instruction_surface.get_width() // 2, 500))
+        self.screen.blit(instruction_surface, (center_x - instruction_surface.get_width() // 2, 550))
 
     def update_cursor(self):
         self.cursor_timer += 1
