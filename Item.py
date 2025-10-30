@@ -14,7 +14,7 @@ class Item:
         # Carga la imagen según el tipo de ítem
         image_file = None
         if self.item_type == "key":
-            image_file = os.path.join("assets", "SPRITES", "Key", "Key.png")
+            image_file = os.path.join("assets", "SPRITES", "Key.png")
         elif self.item_type == "accelerator":
             image_file = os.path.join("assets", "SPRITES", "Items", "Accelerator.png")
         elif self.item_type == "extra_bombs":
