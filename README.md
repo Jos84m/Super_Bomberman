@@ -1,0 +1,2 @@
+# Bomberman Ultimate
+En este proyecto se crea un juego basado, en Super Bomderman con las funciones básicas de este juego. Además creamos una interfaz que muestra el laberinto de los niveles con una HUD que muestra el nivel actual, los ítems obtenidos (no confundir con los Power Ups), un mensaje que le indica al jugador que ya tiene la llave, las vidas del jugador, su puntaje en el nivel actual y el tiempo que tarda en completarlo. Antes de la batalla final en el nivel 4 contra el jefe, hay un pequeño diálogo con este mismo.
